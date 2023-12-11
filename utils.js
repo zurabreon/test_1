@@ -46,7 +46,7 @@ const getFieldValues = (customFields, fieldId) => {
  * @returns типовой объект с данными о поле, который необходимо передать в amoCRM.  
  */
 const makeField = (field_id, value, enum_id) => {
-	if (!value) {
+	if (value === undefined || value === null) {
 		return undefined;
 	}
 	return {

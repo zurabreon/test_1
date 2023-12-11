@@ -10,7 +10,11 @@ const utils = require ("./utils");
 
 const app = express();
 
-const MILLISENCODS = 1000;
+const MILLISECONDS_PER_SECOND = 1000;
+
+const birthdayId = 467121; //id поля "День рождения"
+const ageId = 467125; // id поля "Возраст"
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -19,65 +23,56 @@ api.getAccessToken().then(() => {
 	
 	app.get("/ping", (req, res) => res.send("pong " + Date.now()));
 
-	app.post("/hook", (req, res) => {
+	app.post("/hook", async (req, res) => {
 		
-		const contactId = req.body.contacts.add[0].id;
+		const currentYear = new Date().getFullYear();
+		const currentMonth = new Date().getMonth();
+		const currentDay = new Date().getDate();
 
-		const birthdayId = 467121; //id поля "День рождения"
-		const ageId = 467125; // id поля "Возраст"
-
-		const currentYear = (new Date()).getFullYear();
-		const currentMonth = (new Date()).getMonth();
-		const currentDay = (new Date()).getDate();
-
-		var customerAge;
+		console.log(req.body);
+		console.log(req.body.contacts);
 		
+		const [{id:contactId}] = req.body.contacts.add;
 
-		api.getContact(contactId).then(response => {
+		let customerAge = 0;
 
-			const birthday = new Date(utils.getFieldValue(response.custom_fields_values, birthdayId) * MILLISENCODS);
+		const contact = await api.getContact(contactId);
 
-			const birthdayDay = (birthday).getDate();
-			const birthdayMonth = (birthday).getMonth();
-			const birthdayYear = (birthday).getFullYear();
+		const birthday = new Date(utils.getFieldValue(contact.custom_fields_values, birthdayId) * MILLISECONDS_PER_SECOND);
 
-			if (currentYear - birthdayYear > 0) {
-				customerAge = currentYear - birthdayYear;
-				}
-			else {
-				customerAge = 0;
-			}
+		console.log(contact.custom_fields_values);
 
-			if (currentMonth - birthdayMonth < 0 && customerAge != 0) {
+		const birthdayDay = birthday.getDate();
+		const birthdayMonth = birthday.getMonth();
+		const birthdayYear = birthday.getFullYear();
+
+		if (currentYear - birthdayYear > 0) {
+			customerAge = currentYear - birthdayYear;
+		}
+
+		if (currentMonth - birthdayMonth < 0 && customerAge !== 0) {
+			customerAge--;
+		}
+		else {
+			if (currentMonth - birthdayMonth === 0 && currentDay - birthdayDay < 0 && customerAge !== 0) {
 				customerAge--;
 			}
-			else {
-					if (currentMonth - birthdayMonth === 0 && currentDay - birthdayDay < 0 && customerAge != 0) {
-						customerAge--;
-					}
-			}
-			const customerAgeObject = {
-			field_id: ageId, 
-			field_name: 'Возраст',
-			field_code: null,
-			field_type: 'numeric',
-			values: [
-						{
-							value: customerAge
-						}
-				],
-			};
+		}
 
-			response.custom_fields_values.push(customerAgeObject);
+		const updatedContactField = utils.makeField(ageId, customerAge)
 
-			api.updateContacts(response);
-
-			logger.debug(response.custom_fields_values)
-		})
+		const updateContactValues = {
+			id: contact.id,
+			custom_fields_values: [updatedContactField] 
 		
-		
+		};
+
+		api.updateContacts(updateContactValues);
+
+		logger.debug(contact.custom_fields_values);
 		
 		res.send("OK");
+		
 	});
 	
 	app.listen(config.PORT, () => logger.debug("Server started on ", config.PORT));
