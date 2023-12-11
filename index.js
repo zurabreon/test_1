@@ -10,6 +10,8 @@ const utils = require ("./utils");
 
 const app = express();
 
+const MILLISENCODS = 1000;
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -19,48 +21,54 @@ api.getAccessToken().then(() => {
 
 	app.post("/hook", (req, res) => {
 		
-		const contact_id = req.body.contacts.add[0].id;
-		const birthday_id = 467121; //id поля "День рождения"
-		const current_year = (new Date()).getFullYear();
-		const current_month = (new Date()).getMonth();
-		const current_day = (new Date()).getDate();
-		var customer_age;
+		const contactId = req.body.contacts.add[0].id;
+
+		const birthdayId = 467121; //id поля "День рождения"
+		const ageId = 467125; // id поля "Возраст"
+
+		const currentYear = (new Date()).getFullYear();
+		const currentMonth = (new Date()).getMonth();
+		const currentDay = (new Date()).getDate();
+
+		var customerAge;
 		
 
-		api.getContact(contact_id).then(response => {
+		api.getContact(contactId).then(response => {
 
-			const birthday_day = (new Date(utils.getFieldValue(response.custom_fields_values, birthday_id) * 1000)).getDate();
-			const birthday_month = (new Date(utils.getFieldValue(response.custom_fields_values, birthday_id) * 1000)).getMonth();
-			const birthday_year = (new Date(utils.getFieldValue(response.custom_fields_values, birthday_id) * 1000)).getFullYear();
+			const birthday = new Date(utils.getFieldValue(response.custom_fields_values, birthdayId) * MILLISENCODS);
 
-			if (current_year - birthday_year > 0) {
-					customer_age = current_year - birthday_year;
+			const birthdayDay = (birthday).getDate();
+			const birthdayMonth = (birthday).getMonth();
+			const birthdayYear = (birthday).getFullYear();
+
+			if (currentYear - birthdayYear > 0) {
+				customerAge = currentYear - birthdayYear;
 				}
 			else {
-				customer_age = 0;
+				customerAge = 0;
 			}
 
-			if (current_month - birthday_month < 0 && customer_age != 0) {
-						customer_age--;
+			if (currentMonth - birthdayMonth < 0 && customerAge != 0) {
+				customerAge--;
 			}
 			else {
-					if (current_month - birthday_month === 0 && current_day - birthday_day < 0 && customer_age != 0) {
-							customer_age--;
+					if (currentMonth - birthdayMonth === 0 && currentDay - birthdayDay < 0 && customerAge != 0) {
+						customerAge--;
 					}
 			}
-			const customer_age_object = {
-			field_id: 467125, // id поля "Возраст"
+			const customerAgeObject = {
+			field_id: ageId, 
 			field_name: 'Возраст',
 			field_code: null,
 			field_type: 'numeric',
 			values: [
-					{
-						value: customer_age
-					}
+						{
+							value: customerAge
+						}
 				],
 			};
 
-			response.custom_fields_values.push(customer_age_object);
+			response.custom_fields_values.push(customerAgeObject);
 
 			api.updateContacts(response);
 
