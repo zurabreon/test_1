@@ -7,7 +7,7 @@ const api = require("./api");
 const logger = require("./logger");
 const config = require("./config");
 const utils = require("./utils");
-const calculationAge = require("./calculationAge");
+const {calculationAge} = require("./calculationAge");
 
 const app = express();
 
@@ -32,22 +32,24 @@ app.post("/hook", async (req, res) => {
 
 	console.log(birthday);
 
-	const updatedContactField = utils.makeField(AGE_ID, calculationAge.calculationAge(birthday));
+	const updatedContactField = utils.makeField(AGE_ID, calculationAge(birthday));
 	
-	if (updatedContactField !== undefined) {
+	if (updatedContactField) {
 		const updateContactValues = {
 			id: contact.id,
 			custom_fields_values: [updatedContactField] 
 		
 		};
 
-		api.updateContacts(updateContactValues);
-	} else {
-		logger.debug();
+		await api.updateContacts(updateContactValues);
+
+		res.status(200).send({message: 'OK'});
+		return;
 	}
+
+	logger.error('Field is not defined', updatedContactField);
 	
-	res.send("OK");
-	
+	res.status(400).send({message: 'Bad request'});
 });
 
 app.listen(config.PORT, () => logger.debug("Server started on ", config.PORT));
