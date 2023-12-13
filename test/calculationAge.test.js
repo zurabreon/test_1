@@ -1,4 +1,4 @@
-const calculationAge = require("../calculationAge");
+const {calculationAge} = require("../calculationAge");
 
 const MILLISECONDS_PER_SECOND = 1000;
 
@@ -9,9 +9,9 @@ const fourthTestAge = new Date(1999, 7, 12);
 const fifthTestAge = new Date(2000, 0, 1);
 
 test ('Calculated age without errors', () => {
-    expect(calculationAge.calculationAge(firstTestAge / MILLISECONDS_PER_SECOND)).toBe(69);
-    expect(calculationAge.calculationAge(secondTestAge / MILLISECONDS_PER_SECOND)).toBe(0);
-    expect(calculationAge.calculationAge(thirdTestAge / MILLISECONDS_PER_SECOND)).toBe(0);
-    expect(calculationAge.calculationAge(fourthTestAge / MILLISECONDS_PER_SECOND)).toBe(24);
-    expect(calculationAge.calculationAge(fifthTestAge / MILLISECONDS_PER_SECOND)).toBe(23);
+    expect(calculationAge(firstTestAge / MILLISECONDS_PER_SECOND)).toBe(69);
+    expect(calculationAge(secondTestAge / MILLISECONDS_PER_SECOND)).toBe(0);
+    expect(calculationAge(thirdTestAge / MILLISECONDS_PER_SECOND)).toBe(0);
+    expect(calculationAge(fourthTestAge / MILLISECONDS_PER_SECOND)).toBe(24);
+    expect(calculationAge(fifthTestAge / MILLISECONDS_PER_SECOND)).toBe(23);
 });
